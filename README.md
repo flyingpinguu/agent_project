@@ -152,6 +152,126 @@ Select the Python interpreter in `.venv/` created by `uv sync`. Run the [referen
 
 ## Required Workflow
 
+### Our implementation: first step
+
+Validate the local data before building the agent:
+
+```bash
+uv run python -m src.validate_data
+uv run pytest -q
+```
+
+The validator in `src/validate_data.py` checks required fields, unique IDs,
+ticket/customer links, policy source IDs, evaluation references, and the
+customer/ticket link in seed memory. These checks do not inspect free-text
+memory notes for unrelated personal data; memory isolation also needs to be
+enforced when we implement memory loading. No API key is needed for this step.
+
+### Our implementation: tools
+
+The six tools and their Pydantic input/output contracts are in `src/tools.py`.
+Create a fresh `Tools()` instance per request: it holds the tool trace and the
+source IDs accepted during that request. For example:
+
+```python
+from src.tools import Tools, TicketInput, PolicySearchInput
+
+tools = Tools()
+ticket = tools.get_ticket(TicketInput(ticket_id="T-1001"))
+result = tools.search_policy(PolicySearchInput(query="duplicate payment refund"))
+print(ticket.subject)
+print(result.model_dump())
+```
+
+Ticket, customer, and availability lookups match exact IDs or queue names.
+Policy search scores paragraphs by the fraction of query keywords they contain,
+ignoring common words. Each result carries its source ID, text, and score.
+The default threshold of 0.2 is provisional; evaluation must establish a suitable
+threshold. New wording can still cause keyword search to miss relevant evidence.
+The supplied attack-example paragraph is filtered and recorded as a safety event;
+this simple filter is not a general instruction-attack detector.
+
+The two drafting tools accept proposed text and return a draft with citations.
+They reject unretrieved source IDs and undeclared citations. Escalation also
+checks that the selected owner is available. These tools do not establish whether
+every claim follows from the policy or whether the selected queue is appropriate;
+agent control and evaluation will address those checks. They never modify fixtures
+or send a message. Successful calls and tool errors are recorded in `tools.trace`.
+Each `Tools()` instance also creates its own JSON file under `storage/traces/`,
+containing a unique run ID, UTC start time, and the calls. The file is updated
+after every successful or failed call. `tools.trace_path` gives its location;
+use `Tools(trace_dir=some_path)` to choose another directory. Trace files are
+local generated artifacts and are ignored by Git.
+Invalid input models raise Pydantic validation errors before a tool is called.
+
+Run only our tests with `uv run pytest tests -q`; `uv run pytest -q` also includes
+the supplied reference-solution tests.
+
+### Our implementation: one-ticket agent
+
+`src/agent.py` connects our tools to GPT-6 Luna through OpenRouter. The loop is
+explicit: ask the model for a tool call, validate its arguments, execute the
+tool, and send its result back. A successful draft ends the run immediately.
+
+Set these values in the ignored `.env` file (exported variables take precedence):
+
+```dotenv
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=your-key-here
+OPENROUTER_MODEL=openai/gpt-6-luna
+MAX_AGENT_STEPS=8
+MAX_TOOL_CALLS=6
+```
+
+Run one ticket:
+
+```bash
+uv run python -m src.agent T-1001
+```
+
+Optional: add `--prompt "Investigate the duplicate payment and draft a response."`.
+The result includes the status, draft text, and JSON trace path. The trace also
+contains model messages, usage when returned by the provider, control limits,
+and the final result. It never stores the configured API key.
+
+Each model request counts as one step. Every attempted tool call counts toward
+the tool budget, including invalid requests. Exhausted budgets and API failures
+return `review_required`; no API or model fallback is used. Requests have a
+60-second timeout and no automatic retries. The agent restricts access to the
+requested ticket and its customer, requires context and evidence before drafting,
+and requires an availability check before escalation. Chat Completions uses
+`reasoning_effort="none"` for this model's function calls.
+
+This is a prototype: semantic policy compliance still depends on the model and
+needs evaluation.
+
+### Continuing the same case
+
+Every completed turn saves the full conversation under
+`storage/conversations/<conversation_id>.json`. This includes the system prompt,
+user messages, assistant messages, tool requests, tool results, and the final
+reply shown to the user. The result printed by the command includes the
+`conversation_id` to use for a follow-up:
+
+```bash
+uv run python -m src.agent --conversation YOUR_CONVERSATION_ID --prompt "Make that reply shorter."
+```
+
+The agent loads all previous messages from JSON, appends the new request, and
+sends the full history. This also works after restarting the program. We do not
+configure caching or summarize/truncate history. The history will therefore grow
+with each turn; a provider context-limit error returns `review_required`.
+
+Each conversation belongs to one ticket. Start a new conversation by providing
+a ticket ID without `--conversation`. A follow-up can omit the ticket ID because
+it is stored with the history. Previous tool results stay in the history for
+context, but each turn starts with fresh tool state and must read the current
+ticket/customer and search policies again before drafting. Execution budgets
+reset each turn. Each turn has its own trace file with the shared conversation ID.
+`src/memory.py` contains the small JSON loading and saving functions. Conversation
+files are Git-ignored, like traces. Continue a conversation one turn at a time;
+simultaneous writers to the same conversation are not supported.
+
 Work through the project in this order:
 
 1. Validate the supplied ticket, policy, memory, and evaluation data.

@@ -9,13 +9,14 @@ dependencies = [
     "sentence-transformers>=6.2.0",
     "qdrant-client>=1.20.0",
     "numpy>=2.5.4",
+    "openai>=3.37.0",
 ]
 
 [dependency-groups]
 dev = ["pytest>=9.1.1"]
 
 [tool.pytest.ini_options]
-testpaths = ["solution/tests"]
+testpaths = ["tests", "solution/tests"]
 pythonpath = ["."]
 
 [tool.uv]
