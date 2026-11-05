@@ -1,0 +1,51 @@
+[
+  {
+    "customer_id": "C-001",
+    "name": "Ari Patel",
+    "email": "ari@example.com",
+    "plan": "Professional",
+    "verified": true
+  },
+  {
+    "customer_id": "C-002",
+    "name": "Maya Chen",
+    "email": "maya@example.com",
+    "plan": "Team",
+    "verified": true
+  },
+  {
+    "customer_id": "C-003",
+    "name": "Jonas Weber",
+    "email": "jonas@example.com",
+    "plan": "Enterprise",
+    "verified": true
+  },
+  {
+    "customer_id": "C-004",
+    "name": "Lina Novak",
+    "email": "lina@example.com",
+    "plan": "Professional",
+    "verified": true
+  },
+  {
+    "customer_id": "C-005",
+    "name": "Sam Rivera",
+    "email": "sam@example.com",
+    "plan": "Starter",
+    "verified": false
+  },
+  {
+    "customer_id": "C-006",
+    "name": "Nora Klein",
+    "email": "nora@example.com",
+    "plan": "Enterprise",
+    "verified": true
+  },
+  {
+    "customer_id": "C-007",
+    "name": "Sven Simon",
+    "email": "sven@example.com",
+    "plan": "Team",
+    "verified": false
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "queue": "incident-response",
+    "owner": "Iris Novak",
+    "channel": "#northstar-incident-response",
+    "available": true
+  },
+  {
+    "queue": "finance-review",
+    "owner": "Mateo Singh",
+    "channel": "#northstar-finance-review",
+    "available": true
+  },
+  {
+    "queue": "privacy",
+    "owner": "Greta Holm",
+    "channel": "#northstar-privacy",
+    "available": true
+  },
+  {
+    "queue": "identity-review",
+    "owner": "Nadine Keller",
+    "channel": "#northstar-identity-review",
+    "available": false
+  }
+]

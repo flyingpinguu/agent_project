@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+env/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ty_cache/
+.rumdl_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+
+# Generated local artifacts
+storage/
+/reports/
+solution/reports/*.json
+solution/reports/local_*.md
+!solution/reports/reference_evaluation.md

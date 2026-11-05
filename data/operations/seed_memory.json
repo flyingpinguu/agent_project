@@ -1,0 +1,9 @@
+{
+  "conversation_id": "northstar-demo",
+  "last_ticket_id": "T-1002",
+  "last_customer_id": "C-002",
+  "notes": [
+    "Previous turn verified Maya Chen as the requester for ticket T-1002.",
+    "Maya asked for an MFA recovery checklist."
+  ]
+}
